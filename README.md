@@ -37,6 +37,8 @@ cp .env.example .env
 | `npm run start:prod` | **Production:** `build`, then **`node dist/index.js`**. |
 | `npm start` | Run **`dist/index.js`** only (use after `npm run build`). |
 | `npm run typecheck` | Type-check without emitting files. |
+| `npm test` | Run **Vitest** integration tests (`Fastify.inject`, no network). |
+| `npm run test:watch` | Vitest in watch mode. |
 
 **Development:**
 
@@ -120,6 +122,16 @@ curl -s -o /dev/null -w "%{http_code}\n" -X DELETE http://127.0.0.1:4000/api/pro
 | `404` | Product not found — `{ "error": "Product not found" }` |
 | `4xx` | Other client errors — `{ "error": "<message>" }` |
 | `500` | Server error — `{ "error": "Internal server error" }` |
+
+## Tests
+
+Integration tests: **`src/app.integration.test.ts`** (`app.inject()`, no real port). Three scenarios:
+
+1. **`GET /api/products`** — expect **`[]`**.
+2. **`POST /api/products`** — expect **201** and body with the **new record** (including generated `id`).
+3. **`GET /api/products/{productId}`** — after a create in the same test, expect the **same record** by `id`.
+
+`buildApp({ routes: 'static' })` is used in tests so Vitest resolves path aliases; **`npm run start:dev`** still uses **`@fastify/autoload`**.
 
 ## Project notes
 

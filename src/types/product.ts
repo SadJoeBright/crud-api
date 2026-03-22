@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { INVALID_PRODUCT_ID_MESSAGE } from '@utils/productId.js';
 
 export enum ProductCategory {
   ELECTRONICS = 'electronics',
@@ -33,7 +32,7 @@ export const productDtoSchema = z
 
 export const productIdParamsSchema = z
   .object({
-    id: z.uuid({ message: INVALID_PRODUCT_ID_MESSAGE }),
+    id: z.uuid({ message: 'Invalid product id: must be a valid UUID' }),
   })
   .strict();
 
