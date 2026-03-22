@@ -1,75 +1,134 @@
 import { randomUUID } from 'node:crypto';
-import { FastifyPluginAsync } from 'fastify';
-import { products } from '../data/index.js';
+import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import { z } from 'zod';
+import { products } from '@data';
 import {
-  CreateProductReqDto,
   ProductDto,
-  UpdateProductReqDto,
-} from '../types/index.js';
+  createProductSchema,
+  notFoundErrorSchema,
+  productDtoSchema,
+  productIdParamsSchema,
+  updateProductSchema,
+} from '@types';
 
-const productsRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/api/products', async (request, response) => {
-    return response.status(200).send(products);
-  });
+const productsRoutes: FastifyPluginAsyncZod = async (app) => {
+  app.get(
+    '/api/products',
+    {
+      schema: {
+        response: {
+          200: z.array(productDtoSchema),
+        },
+      },
+    },
+    async (_request, reply) => {
+      return reply.status(200).send(products);
+    },
+  );
 
-  app.get('/api/products/:id', async (request, response) => {
-    const { id } = request.params as { id: string };
-    const product = products.find((product) => product.id === id);
+  app.get(
+    '/api/products/:id',
+    {
+      schema: {
+        params: productIdParamsSchema,
+        response: {
+          200: productDtoSchema,
+          404: notFoundErrorSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const product = products.find((p) => p.id === id);
 
-    if (!product) {
-      return response.status(404).send({ error: 'Product not found' });
-    }
+      if (!product) {
+        return reply.status(404).send({ error: 'Product not found' });
+      }
 
-    return response.status(200).send(product);
-  });
+      return reply.status(200).send(product);
+    },
+  );
 
-  app.post('/api/products', async (request, response) => {
-    const body = request.body as CreateProductReqDto;
+  app.post(
+    '/api/products',
+    {
+      schema: {
+        body: createProductSchema,
+        response: {
+          201: productDtoSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const product: ProductDto = {
+        id: randomUUID(),
+        ...request.body,
+      };
+      products.push(product);
 
-    const product: ProductDto = {
-      id: randomUUID(),
-      ...body,
-    };
-    products.push(product);
+      return reply.status(201).send(product);
+    },
+  );
 
-    return response.status(201).send(product);
-  });
+  app.put(
+    '/api/products/:id',
+    {
+      schema: {
+        params: productIdParamsSchema,
+        body: updateProductSchema,
+        response: {
+          200: productDtoSchema,
+          404: notFoundErrorSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const index = products.findIndex((p) => p.id === id);
 
-  app.put('/api/products/:id', async (request, response) => {
-    const { id } = request.params as { id: string };
-    const body = request.body as UpdateProductReqDto;
+      if (index === -1) {
+        return reply.status(404).send({ error: 'Product not found' });
+      }
 
-    const index = products.findIndex((p) => p.id === id);
+      const product = products[index];
+      const { id: existingId, ...productFields } = product;
 
-    if (index === -1) {
-      return response.status(404).send({ error: 'Product not found' });
-    }
+      const updatedProduct: ProductDto = {
+        id: existingId,
+        ...productFields,
+        ...request.body,
+      };
 
-    const product = products[index];
+      products[index] = updatedProduct;
 
-    const updatedProduct: ProductDto = {
-      ...product,
-      ...body,
-      id: product.id,
-    };
+      return reply.status(200).send(updatedProduct);
+    },
+  );
 
-    products[index] = updatedProduct;
+  app.delete(
+    '/api/products/:id',
+    {
+      schema: {
+        params: productIdParamsSchema,
+        response: {
+          204: z.undefined(),
+          404: notFoundErrorSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const index = products.findIndex((p) => p.id === id);
 
-    return response.status(200).send(updatedProduct);
-  });
+      if (index === -1) {
+        return reply.status(404).send({ error: 'Product not found' });
+      }
 
-  app.delete('/api/products/:id', async (request, response) => {
-    const { id } = request.params as { id: string };
-    const index = products.findIndex((p) => p.id === id);
+      products.splice(index, 1);
 
-    if (index === -1) {
-      return response.status(404).send({ error: 'Product not found' });
-    }
-
-    products.splice(index, 1);
-
-    return response.status(204).send();
-  });
+      return reply.status(204).send(undefined);
+    },
+  );
 };
 
 export default productsRoutes;

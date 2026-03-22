@@ -6,6 +6,14 @@
 npm run start:dev
 ```
 
+### Errors
+
+Unhandled failures during a request are caught by the global error handler (`src/errorHandler.ts`):
+
+- **500** — JSON `{ "error": "<message>" }` with a generic message in **`NODE_ENV=production`** (details stay in server logs). In development, the thrown message is returned to help debugging.
+- **4xx** (Fastify operational errors) — JSON `{ "error": "<message>" }` with the error’s message when safe.
+- **400** (Zod / schema validation) — `{ "error": "Validation failed", "details": … }` as before.
+
 ### POST `/api/products` returns no `id`
 
 If the response looks like the request body only (no `id` field), you are usually hitting an **old Node process** still listening on the same port (for example `4000`) with outdated code.

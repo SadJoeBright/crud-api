@@ -4,6 +4,13 @@
     "lib": ["ES2022"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "paths": {
+      "@types": ["./src/types/index.ts"],
+      "@data": ["./src/data/index.ts"],
+      "@routes/*": ["./src/routes/*"],
+      "@utils/*": ["./src/utils/*"]
+    },
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,

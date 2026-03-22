@@ -1,3 +1,3 @@
-import { ProductCategory, ProductDto } from '../types/index.js';
+import { ProductDto } from '@types';
 
 export const products: ProductDto[] = [];
