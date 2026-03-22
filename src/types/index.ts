@@ -17,3 +17,7 @@ export type ProductDto = {
   category: ProductCategory;
   inStock: boolean;
 };
+
+export type CreateProductReqDto = Omit<ProductDto, 'id'>;
+
+export type UpdateProductReqDto = Partial<ProductDto>;
